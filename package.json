@@ -11,6 +11,7 @@
   "scripts": {
     "build": "pnpm -r run build",
     "dev:api": "pnpm --filter @viaja/api run dev",
+    "dev:mobile": "pnpm --filter @viaja/mobile run start",
     "typecheck": "pnpm -r run typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

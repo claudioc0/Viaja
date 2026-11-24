@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "VIAJA",
+    "slug": "viaja",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "viaja",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "plugins": ["expo-router", "expo-secure-store"],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.viaja.mobile"
+    },
+    "android": {
+      "package": "app.viaja.mobile"
+    }
+  }
+}
