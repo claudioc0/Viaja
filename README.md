@@ -55,7 +55,19 @@ pnpm db:up
 # equivalente a: docker compose up -d
 ```
 
-4. **Validar tipagem, lint e formatação em todos os pacotes:**
+4. **Aplicar migrations e popular dados de demonstração (seed):**
+
+```bash
+pnpm --filter @viaja/api run db:migrate:deploy
+pnpm db:seed
+```
+
+> **Credenciais locais geradas pelo seed:**
+>
+> - **Administrador:** `admin@viaja.app` / `Admin@123`
+> - **Passageiro:** `passageiro@viaja.app` / `Viaja@123`
+
+5. **Validar tipagem, lint e formatação em todos os pacotes:**
 
 ```bash
 pnpm typecheck

@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PASSENGER
+  ADMIN
+}
+
+enum SeatType {
+  CONVENTIONAL
+  EXECUTIVE
+  SEMI_SLEEPER
+  SLEEPER
+}
+
+enum TripStatus {
+  SCHEDULED
+  BOARDING
+  IN_TRANSIT
+  COMPLETED
+  CANCELLED
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentMethod {
+  PIX
+  CREDIT_CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REFUNDED
+}
+
+model User {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String        @db.VarChar(120)
+  email        String        @unique(map: "uq_users_email") @db.VarChar(255)
+  passwordHash String        @map("password_hash") @db.VarChar(255)
+  role         UserRole      @default(PASSENGER)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  reservations Reservation[]
+
+  @@map("users")
+}
+
+model Bus {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(100)
+  plate        String   @unique(map: "uq_buses_plate") @db.VarChar(10)
+  seatCapacity Int      @map("seat_capacity")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  seats        Seat[]
+  trips        Trip[]
+
+  @@map("buses")
+}
+
+model Seat {
+  id               String            @id @default(uuid()) @db.Uuid
+  busId            String            @map("bus_id") @db.Uuid
+  seatNumber       String            @map("seat_number") @db.VarChar(5)
+  seatType         SeatType          @map("seat_type")
+  bus              Bus               @relation(fields: [busId], references: [id], onDelete: Cascade)
+  reservationSeats ReservationSeat[]
+
+  @@unique([busId, seatNumber], map: "uq_seats_bus_seat_number")
+  @@index([busId], map: "idx_seats_bus_id")
+  @@map("seats")
+}
+
+model Route {
+  id                String  @id @default(uuid()) @db.Uuid
+  origin            String  @db.VarChar(120)
+  destination       String  @db.VarChar(120)
+  distance          Decimal @db.Decimal(8, 2)
+  estimatedDuration Int     @map("estimated_duration")
+  trips             Trip[]
+
+  @@unique([origin, destination], map: "uq_routes_origin_destination")
+  @@index([origin, destination], map: "idx_routes_origin_destination")
+  @@map("routes")
+}
+
+model Trip {
+  id               String            @id @default(uuid()) @db.Uuid
+  routeId          String            @map("route_id") @db.Uuid
+  busId            String            @map("bus_id") @db.Uuid
+  departureAt      DateTime          @map("departure_at") @db.Timestamptz(3)
+  arrivalAt        DateTime          @map("arrival_at") @db.Timestamptz(3)
+  price            Decimal           @db.Decimal(10, 2)
+  status           TripStatus        @default(SCHEDULED)
+  route            Route             @relation(fields: [routeId], references: [id], onDelete: Restrict)
+  bus              Bus               @relation(fields: [busId], references: [id], onDelete: Restrict)
+  reservations     Reservation[]
+  reservationSeats ReservationSeat[]
+
+  @@index([routeId, departureAt, status], map: "idx_trips_route_departure_status")
+  @@index([departureAt, status], map: "idx_trips_departure_status")
+  @@index([price], map: "idx_trips_price")
+  @@map("trips")
+}
+
+model Reservation {
+  id         String            @id @default(uuid()) @db.Uuid
+  code       String            @unique(map: "uq_reservations_code") @db.VarChar(12)
+  userId     String            @map("user_id") @db.Uuid
+  tripId     String            @map("trip_id") @db.Uuid
+  status     ReservationStatus @default(PENDING)
+  totalPrice Decimal           @map("total_price") @db.Decimal(10, 2)
+  expiresAt  DateTime?         @map("expires_at") @db.Timestamptz(3)
+  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  user       User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  trip       Trip              @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  seats      ReservationSeat[]
+  payment    Payment?
+
+  @@index([userId, createdAt(sort: Desc)], map: "idx_reservations_user_created")
+  @@index([tripId, status], map: "idx_reservations_trip_status")
+  @@index([status, expiresAt], map: "idx_reservations_status_expires")
+  @@map("reservations")
+}
+
+model ReservationSeat {
+  id            String      @id @default(uuid()) @db.Uuid
+  reservationId String      @map("reservation_id") @db.Uuid
+  tripId        String      @map("trip_id") @db.Uuid
+  seatId        String      @map("seat_id") @db.Uuid
+  price         Decimal     @db.Decimal(10, 2)
+  isActive      Boolean     @default(true) @map("is_active")
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  trip          Trip        @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  seat          Seat        @relation(fields: [seatId], references: [id], onDelete: Restrict)
+
+  @@unique([reservationId, seatId], map: "uq_reservation_seats_reservation_seat")
+  @@index([tripId, seatId], map: "idx_reservation_seats_trip_seat")
+  @@map("reservation_seats")
+}
+
+model Payment {
+  id                   String        @id @default(uuid()) @db.Uuid
+  reservationId        String        @unique(map: "uq_payments_reservation_id") @map("reservation_id") @db.Uuid
+  amount               Decimal       @db.Decimal(10, 2)
+  method               PaymentMethod
+  status               PaymentStatus @default(PENDING)
+  transactionReference String        @unique(map: "uq_payments_transaction_reference") @map("transaction_reference") @db.VarChar(64)
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  reservation          Reservation   @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
