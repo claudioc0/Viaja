@@ -6,3 +6,4 @@ build/
 coverage/
 pnpm-lock.yaml
 docs/prototypes/index.html
+**/next-env.d.ts
