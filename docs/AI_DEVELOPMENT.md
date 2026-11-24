@@ -1,0 +1,25 @@
+# VIAJA — Governança de Desenvolvimento Assistido por IA
+
+## 1. Propósito
+
+Este documento registra a metodologia de uso de assistentes de Inteligência Artificial durante o ciclo de engenharia do projeto **VIAJA**, cumprindo o objetivo técnico de **produtividade assistida por IA com validação humana rigorosa**.
+
+---
+
+## 2. Diretrizes Obrigatórias
+
+1. **Compreensão Integral**: Nenhum trecho de código, query SQL, schema Prisma ou configuração de infraestrutura sugerido por IA é incorporado ao repositório sem leitura e validação linha a linha.
+2. **Arquitetura Guiada por Decisões Explícitas**: A IA atua como aceleradora de documentação, prototipação, scaffolding e geração de testes, mas as decisões críticas (modelo transacional, controle de concorrência, contratos de API e limites de segurança) são revisadas e justificadas em ADRs.
+3. **Segurança Inegociável**:
+   - Proibido versionar chaves reais, segredos JWT ou strings de conexão sensíveis.
+   - Validações geradas no frontend (`Zod`) são obrigatoriamente espelhadas e aplicadas no backend.
+   - Logs e telemetria (Sentry/Crashlytics) passam por revisão para garantir ausência de vazamento de senhas, tokens ou PII desnecessária.
+4. **Verificação Empírica**: Toda entrega assistida por IA só é aprovada após validação de tipagem (`tsc`), linting (`eslint`) e execução da suíte de testes automatizados pertinente à fase.
+
+---
+
+## 3. Registro por Fase
+
+| Fase | Escopo Assistido | Validação Humana Aplicada |
+| :--- | :--- | :--- |
+| **Fase 0 — Planejamento e Design** | Estruturação dos documentos de arquitetura, modelagem relacional, estratégia de testes, tokens visuais e protótipo interativo Mobile/Web. | Revisão dos fluxos de negócio, validação do índice único parcial (`uq_active_trip_seat`) para prevenção de *double booking* no PostgreSQL e aprovação visual das telas antes de iniciar código de aplicação. |
