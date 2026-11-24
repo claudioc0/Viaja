@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: viaja-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-viaja}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-viaja_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-viaja_db}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - viaja_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-viaja} -d $${POSTGRES_DB:-viaja_db}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  viaja_postgres_data:
+    name: viaja_postgres_data

@@ -15,11 +15,11 @@ O **VIAJA** é uma plataforma inteligente de mobilidade rodoviária voltada à p
 
 ### 2.1. Perfis do Sistema
 
-| Perfil | Interface Principal | Responsabilidades no MVP |
-| :--- | :--- | :--- |
+| Perfil                       | Interface Principal          | Responsabilidades no MVP                                                                                                                                                                                                                 |
+| :--------------------------- | :--------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Passageiro** (`PASSENGER`) | Mobile (React Native / Expo) | Criar conta, autenticar-se, pesquisar viagens com filtros/ordenação, selecionar assentos disponíveis, concluir checkout simulado (PIX/Cartão), visualizar passagem digital com QR Code e consultar/cancelar reservas próprias elegíveis. |
-| **Administrador** (`ADMIN`) | Web (Next.js) | Autenticar-se no painel operacional, acompanhar métricas de negócio no dashboard, cadastrar/editar/remover rotas e viagens, gerenciar disponibilidade e consultar/cancelar reservas administrativamente. |
-| **Sistema** (Motor Interno) | Backend + PostgreSQL | Garantir integridade transacional, impedir reservas concorrentes sobre o mesmo assento, expirar reservas pendentes vencidas, calcular valores totais no servidor e sincronizar estados entre `Payment` e `Reservation`. |
+| **Administrador** (`ADMIN`)  | Web (Next.js)                | Autenticar-se no painel operacional, acompanhar métricas de negócio no dashboard, cadastrar/editar/remover rotas e viagens, gerenciar disponibilidade e consultar/cancelar reservas administrativamente.                                 |
+| **Sistema** (Motor Interno)  | Backend + PostgreSQL         | Garantir integridade transacional, impedir reservas concorrentes sobre o mesmo assento, expirar reservas pendentes vencidas, calcular valores totais no servidor e sincronizar estados entre `Payment` e `Reservation`.                  |
 
 ### 2.2. Matriz de Priorização do Escopo
 
@@ -149,13 +149,13 @@ flowchart TD
 
 ### 4.2. Organização do Monorepo
 
-| Caminho | Pacote Workspace | Responsabilidade |
-| :--- | :--- | :--- |
-| `apps/mobile` | `@viaja/mobile` | App do passageiro (Expo Router, TanStack Query, Zustand, React Hook Form). |
-| `apps/web` | `@viaja/web` | Painel administrativo (Next.js App Router, shadcn/ui, TanStack Query, Recharts). |
-| `packages/shared` | `@viaja/shared` | Schemas `Zod`, tipos inferidos (`z.infer`), DTOs e constantes compartilhadas. |
-| `backend/api` | `@viaja/api` | API REST Express modular, Prisma Client, middlewares de segurança e testes de API. |
-| `docs/` | — | Documentação arquitetural, banco de dados, design system, protótipos, testes e ADRs. |
+| Caminho           | Pacote Workspace | Responsabilidade                                                                     |
+| :---------------- | :--------------- | :----------------------------------------------------------------------------------- |
+| `apps/mobile`     | `@viaja/mobile`  | App do passageiro (Expo Router, TanStack Query, Zustand, React Hook Form).           |
+| `apps/web`        | `@viaja/web`     | Painel administrativo (Next.js App Router, shadcn/ui, TanStack Query, Recharts).     |
+| `packages/shared` | `@viaja/shared`  | Schemas `Zod`, tipos inferidos (`z.infer`), DTOs e constantes compartilhadas.        |
+| `backend/api`     | `@viaja/api`     | API REST Express modular, Prisma Client, middlewares de segurança e testes de API.   |
+| `docs/`           | —                | Documentação arquitetural, banco de dados, design system, protótipos, testes e ADRs. |
 
 ### 4.3. Arquitetura Interna do Backend (`backend/api`)
 
@@ -174,26 +174,31 @@ O backend adota **arquitetura modular orientada a domínio**, evitando acoplamen
 ## 5. Justificativa da Stack e Decisões Técnicas (ADRs Iniciais)
 
 ### ADR-001 — Monorepo com `pnpm workspaces` e `@viaja/shared`
+
 - **Contexto**: Três aplicações TypeScript (`mobile`, `web`, `api`) consomem os mesmos payloads, filtros e regras de formulário.
 - **Decisão**: Centralizar o código em um monorepo `pnpm` com pacote `@viaja/shared` contendo os schemas `Zod` e tipagens de domínio.
-- **Justificativa**: Elimina divergência de contratos entre clientes e servidor (*single source of truth*), economiza espaço em disco via content-addressable store do `pnpm` e simplifica pipelines de CI/CD.
+- **Justificativa**: Elimina divergência de contratos entre clientes e servidor (_single source of truth_), economiza espaço em disco via content-addressable store do `pnpm` e simplifica pipelines de CI/CD.
 
 ### ADR-002 — PostgreSQL + Prisma ORM para Persistência Relacional
+
 - **Contexto**: Venda de assentos exige consistência estrita, integridade referencial entre 8 entidades e suporte robusto a transações concorrentes.
 - **Decisão**: Utilizar PostgreSQL gerenciado localmente via Docker Compose e mapeado com Prisma ORM + migrations SQL versionadas.
-- **Justificativa**: Bancos relacionais ACID permitem chaves estrangeiras rígidas, locks de linha (`SELECT ... FOR UPDATE`) e índices únicos parciais nativos no PostgreSQL — garantias essenciais para impedir *double booking*.
+- **Justificativa**: Bancos relacionais ACID permitem chaves estrangeiras rígidas, locks de linha (`SELECT ... FOR UPDATE`) e índices únicos parciais nativos no PostgreSQL — garantias essenciais para impedir _double booking_.
 
 ### ADR-003 — Controle de Concorrência em Duas Camadas (Transação + Constraint de Banco)
+
 - **Contexto**: Dois passageiros podem visualizar o mesmo assento livre e enviar `POST /api/reservations` no mesmo milissegundo.
 - **Decisão**: Combinar transação explícita com lock pessimista nos assentos solicitados **e** índice único parcial no PostgreSQL para reservas ativas (`PENDING` ou `CONFIRMED`), aliado à expiração automática (`expiresAt`) de reservas `PENDING`.
-- **Justificativa**: Não depende do estado visual do frontend nem apenas de verificações `SELECT` antes de `INSERT` em nível de aplicação (sujeitas a *race conditions*).
+- **Justificativa**: Não depende do estado visual do frontend nem apenas de verificações `SELECT` antes de `INSERT` em nível de aplicação (sujeitas a _race conditions_).
 
 ### ADR-004 — Separação entre Estado de Servidor (TanStack Query) e Estado de UI (Zustand)
+
 - **Contexto**: A disponibilidade de assentos muda externamente a qualquer instante, enquanto dados da seleção atual no checkout e sessão pertencem à interação local.
 - **Decisão**: Adotar **TanStack Query** para cache, revalidação em foco e mutações de API (tanto no Mobile quanto na Web) e **Zustand** no Mobile apenas para estado efêmero de UI/fluxo de compra e sessão.
 - **Justificativa**: Evita stores globais inchadas com dados obsoletos da API e garante revalidação automática do mapa de assentos ao retomar a tela.
 
 ### ADR-005 — Express + TypeScript no Backend com Swagger/OpenAPI
+
 - **Contexto**: Necessidade de uma API REST clara, testável com `Supertest`, bem documentada e desacoplada dos clientes.
 - **Decisão**: Construir a API com Node.js + Express + TypeScript, validação via middlewares `Zod` e especificação OpenAPI 3.0 servida via Swagger UI (`/api/docs`).
 - **Justificativa**: Ecossistema maduro, controle explícito sobre middlewares HTTP/transações, excelente integração com Supertest e curva direta de leitura para avaliadores técnicos.

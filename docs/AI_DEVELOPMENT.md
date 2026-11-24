@@ -20,6 +20,6 @@ Este documento registra a metodologia de uso de assistentes de Inteligência Art
 
 ## 3. Registro por Fase
 
-| Fase | Escopo Assistido | Validação Humana Aplicada |
-| :--- | :--- | :--- |
-| **Fase 0 — Planejamento e Design** | Estruturação dos documentos de arquitetura, modelagem relacional, estratégia de testes, tokens visuais e protótipo interativo Mobile/Web. | Revisão dos fluxos de negócio, validação do índice único parcial (`uq_active_trip_seat`) para prevenção de *double booking* no PostgreSQL e aprovação visual das telas antes de iniciar código de aplicação. |
+| Fase                               | Escopo Assistido                                                                                                                          | Validação Humana Aplicada                                                                                                                                                                                    |
+| :--------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Fase 0 — Planejamento e Design** | Estruturação dos documentos de arquitetura, modelagem relacional, estratégia de testes, tokens visuais e protótipo interativo Mobile/Web. | Revisão dos fluxos de negócio, validação do índice único parcial (`uq_active_trip_seat`) para prevenção de _double booking_ no PostgreSQL e aprovação visual das telas antes de iniciar código de aplicação. |

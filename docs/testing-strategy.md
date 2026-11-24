@@ -5,6 +5,7 @@
 A estratégia de testes do **VIAJA** foi desenhada para proteger os fluxos críticos de compra, integridade financeira/operacional e controle de acesso, evitando testes frágeis focados em detalhes internos de implementação.
 
 Os pilares centrais são:
+
 1. **Confiabilidade Transacional**: provar de forma determinística que duas requisições simultâneas nunca reservam a mesma poltrona.
 2. **Segurança e Autorização**: assegurar que rotas administrativas (`ADMIN`) e recursos privados de outros passageiros estejam devidamente blindados.
 3. **Contratos Compartilhados**: validar schemas `Zod` em `@viaja/shared` garantindo paridade entre Mobile, Web e Backend.
@@ -26,19 +27,20 @@ flowchart TD
     INT --> E2E
 ```
 
-| Camada | Escopo | Ferramentas | Onde Reside |
-| :--- | :--- | :--- | :--- |
-| **Unitários (Shared & Backend)** | Schemas `Zod`, regras puras de domínio, cálculo de tarifas, elegibilidade de cancelamento, expiração de reserva e geração/validação de JWT. | `Vitest` | `packages/shared`, `backend/api/tests/unit` |
-| **Integração & Concorrência (API)** | Ciclo HTTP completo Express → Service → Prisma → PostgreSQL isolado de teste. | `Vitest` + `Supertest` | `backend/api/tests/integration` |
-| **Componentes Mobile** | Renderização de telas, formulários (`React Hook Form`), seleção de poltronas e estados visuais. | `Jest` + `React Native Testing Library` | `apps/mobile/src/**/__tests__` |
-| **Componentes Web** | Cards/gráficos de KPIs, tabelas administrativas, formulários de CRUD e proteção de sessão. | `Vitest` + `@testing-library/react` | `apps/web/src/**/__tests__` |
-| **End-to-End (E2E)** | Jornada integrada navegador ↔ API ↔ banco de dados. | `Playwright` | `apps/web/e2e` (ou `e2e/`) |
+| Camada                              | Escopo                                                                                                                                      | Ferramentas                             | Onde Reside                                 |
+| :---------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------------------- | :------------------------------------------ |
+| **Unitários (Shared & Backend)**    | Schemas `Zod`, regras puras de domínio, cálculo de tarifas, elegibilidade de cancelamento, expiração de reserva e geração/validação de JWT. | `Vitest`                                | `packages/shared`, `backend/api/tests/unit` |
+| **Integração & Concorrência (API)** | Ciclo HTTP completo Express → Service → Prisma → PostgreSQL isolado de teste.                                                               | `Vitest` + `Supertest`                  | `backend/api/tests/integration`             |
+| **Componentes Mobile**              | Renderização de telas, formulários (`React Hook Form`), seleção de poltronas e estados visuais.                                             | `Jest` + `React Native Testing Library` | `apps/mobile/src/**/__tests__`              |
+| **Componentes Web**                 | Cards/gráficos de KPIs, tabelas administrativas, formulários de CRUD e proteção de sessão.                                                  | `Vitest` + `@testing-library/react`     | `apps/web/src/**/__tests__`                 |
+| **End-to-End (E2E)**                | Jornada integrada navegador ↔ API ↔ banco de dados.                                                                                         | `Playwright`                            | `apps/web/e2e` (ou `e2e/`)                  |
 
 ---
 
 ## 3. Cenários Críticos por Camada
 
 ### 3.1. Testes Unitários (`backend/api` & `packages/shared`)
+
 - **Autenticação**: hash de senha nunca armazena texto puro; tokens expirados ou assinados com segredo inválido são rejeitados.
 - **Validação (`Zod`)**: rejeição de datas passadas na criação de viagens, `arrivalAt <= departureAt`, lista vazia de assentos ou excesso acima do limite permitido por compra.
 - **Cálculo de Preços**: `totalPrice` calculado exclusivamente a partir do preço oficial da viagem/assento no servidor (ignorando qualquer valor enviado pelo cliente).
@@ -46,6 +48,7 @@ flowchart TD
 - **Expiração de Reservas**: reservas `PENDING` com `expiresAt < now()` são tratadas como expiradas e liberam os assentos.
 
 ### 3.2. Testes de Integração (`Supertest` + Banco de Teste)
+
 Executados contra uma instância real do PostgreSQL (schema/banco de teste limpo entre suítes):
 
 - **`/api/auth`**: registro de novo passageiro (`201`), tentativa de e-mail duplicado (`409`), login válido (`200`), credenciais inválidas (`401`), refresh de sessão e `/me` autenticado.
@@ -58,6 +61,7 @@ Executados contra uma instância real do PostgreSQL (schema/banco de teste limpo
   - Cancelamento liberando novamente o assento no mapa da viagem.
 
 ### 3.3. Teste Específico de Concorrência (Obrigatório)
+
 Para validar o requisito central de integridade do **VIAJA**:
 
 1. Preparar uma viagem ativa com o assento `12` disponível.
@@ -71,6 +75,7 @@ Para validar o requisito central de integridade do **VIAJA**:
 ### 3.4. Testes de Frontend
 
 #### Mobile (`React Native Testing Library`)
+
 - **Formulários de Auth e Pesquisa**: exibição de mensagens de validação `Zod` antes do disparo de rede.
 - **Mapa de Assentos**:
   - Assentos `OCCUPIED` ficam desabilitados ao toque.
@@ -79,12 +84,15 @@ Para validar o requisito central de integridade do **VIAJA**:
 - **Estados Visuais**: verificação explícita de `Loading` (skeleton/spinner), `Empty State` (nenhuma viagem encontrada) e `Error State` (falha na API com botão de nova tentativa).
 
 #### Web (`Testing Library`)
+
 - **Dashboard**: renderização correta dos indicadores numéricos (viagens, reservas, receita, taxa de ocupação) a partir dos mocks da API.
 - **Formulários Administrativos**: criação/edição de rotas e viagens validando campos obrigatórios, preços e horários.
 - **Gestão de Reservas**: filtragem por viagem e confirmação antes do cancelamento administrativo.
 
 ### 3.5. Testes End-to-End (`Playwright`)
+
 Validação automatizada das jornadas completas em navegador real:
+
 1. Acessar a aplicação e realizar autenticação.
 2. Executar fluxo operacional administrativo (cadastrar rota/viagem e visualizar no dashboard) e/ou fluxo completo de consulta, seleção de assento, pagamento simulado e confirmação de reserva conforme escopo E2E.
 3. Verificar persistência após recarregamento da página e proteção de rotas não autenticadas.
@@ -108,6 +116,7 @@ Validação automatizada das jornadas completas em navegador real:
 ## 5. Critérios de Pronto (Definition of Done de Qualidade)
 
 Nenhuma funcionalidade é considerada concluída sem:
+
 - [ ] Tipagem estrita em TypeScript (`strict: true`, zero `any` injustificado).
 - [ ] Validação de entrada tanto no cliente quanto no servidor.
 - [ ] Cobertura dos caminhos felizes **e** caminhos de erro/borda nas regras de negócio.
