@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../../src/components/Button';
+import { runMonitoringDiagnosticCheck } from '../../src/services/monitoring';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { colors, radii, spacing } from '../../src/utils/theme';
+
+const IS_NON_PROD =
+  (typeof __DEV__ !== 'undefined' && __DEV__) || process.env.EXPO_PUBLIC_APP_ENV !== 'production';
 
 export default function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [diagnosticFeedback, setDiagnosticFeedback] = useState<string | null>(null);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -16,6 +21,15 @@ export default function ProfileScreen() {
     } finally {
       setLoggingOut(false);
     }
+  };
+
+  const handleDiagnosticTest = () => {
+    const result = runMonitoringDiagnosticCheck('non_fatal');
+    setDiagnosticFeedback(
+      `Falha simulada validada (${result.eventsRecorded} evento(s) sanitizado(s) · Sentry: ${
+        result.sentryCaptured ? 'ativo' : 'standby'
+      } · Crashlytics: ${result.crashlyticsCaptured ? 'nativo' : 'buffer dev'}).`,
+    );
   };
 
   return (
@@ -48,6 +62,26 @@ export default function ProfileScreen() {
           onPress={handleLogout}
         />
       </View>
+
+      {IS_NON_PROD ? (
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Diagnóstico de Monitoramento (Dev / Preview)</Text>
+          <Text style={styles.helperText}>
+            Dispara uma exceção não-fatal sanitizada para validar a captura no Sentry e no Firebase
+            Crashlytics em builds de desenvolvimento e distribuição de testes.
+          </Text>
+          <Button
+            title="Testar captura de falha"
+            variant="outline"
+            onPress={handleDiagnosticTest}
+          />
+          {diagnosticFeedback ? (
+            <Text style={styles.helperText} testID="monitoring-diagnostic-feedback">
+              {diagnosticFeedback}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
     </ScrollView>
   );
 }

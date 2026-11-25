@@ -1,4 +1,5 @@
 import type { ApiErrorEnvelope, AuthResponseDto } from '@viaja/shared';
+import { recordMobileBreadcrumb, recordMobileError } from './monitoring';
 import { secureSessionStorage } from './secure-session';
 
 const API_BASE_URL =
@@ -99,12 +100,20 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       headers,
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
-  } catch {
-    throw new ApiClientError(
+  } catch (networkErr) {
+    const clientErr = new ApiClientError(
       0,
       'NETWORK_ERROR',
       'Não foi possível conectar ao servidor VIAJA. Verifique sua conexão de rede.',
     );
+    recordMobileError(networkErr instanceof Error ? networkErr : clientErr, {
+      layer: 'mobileApiRequest',
+      method,
+      path,
+      query,
+      errorCode: 'NETWORK_ERROR',
+    });
+    throw clientErr;
   }
 
   if (response.status === 401 && authenticated && retryOnUnauthorized) {
@@ -123,12 +132,32 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   if (!response.ok) {
     const envelope = payload as ApiErrorEnvelope | null;
-    throw new ApiClientError(
+    const apiError = new ApiClientError(
       response.status,
       envelope?.error?.code ?? 'API_ERROR',
       envelope?.error?.message ?? 'Ocorreu um erro ao processar sua solicitação.',
       envelope?.error?.details,
     );
+
+    if (response.status >= 500) {
+      recordMobileError(apiError, {
+        layer: 'mobileApiRequest',
+        method,
+        path,
+        statusCode: response.status,
+        errorCode: apiError.code,
+        requestId: response.headers.get('x-request-id') ?? undefined,
+      });
+    } else {
+      recordMobileBreadcrumb(
+        'http.client',
+        `${method} ${path} -> ${response.status} (${apiError.code})`,
+        { method, path, statusCode: response.status, errorCode: apiError.code },
+        'warning',
+      );
+    }
+
+    throw apiError;
   }
 
   return payload as T;

@@ -1,4 +1,5 @@
 import type { ApiErrorEnvelope, AuthResponseDto } from '@viaja/shared';
+import { captureWebException, recordWebBreadcrumb } from '../lib/monitoring';
 import { webAuthStorage } from './auth-storage';
 
 const API_BASE_URL =
@@ -97,12 +98,20 @@ export async function webApiRequest<T>(path: string, options: WebRequestOptions 
       headers,
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
-  } catch {
-    throw new WebApiError(
+  } catch (networkErr) {
+    const wrapped = new WebApiError(
       0,
       'NETWORK_ERROR',
       'Falha de conexão com a API VIAJA. Verifique se o backend está em execução.',
     );
+    captureWebException(networkErr instanceof Error ? networkErr : wrapped, {
+      layer: 'webApiRequest',
+      method,
+      path,
+      query,
+      errorCode: 'NETWORK_ERROR',
+    });
+    throw wrapped;
   }
 
   if (response.status === 401 && authenticated && retryOnUnauthorized) {
@@ -121,12 +130,32 @@ export async function webApiRequest<T>(path: string, options: WebRequestOptions 
 
   if (!response.ok) {
     const errPayload = payload as ApiErrorEnvelope | null;
-    throw new WebApiError(
+    const apiError = new WebApiError(
       response.status,
       errPayload?.error?.code ?? 'API_ERROR',
       errPayload?.error?.message ?? 'Não foi possível concluir a operação.',
       errPayload?.error?.details,
     );
+
+    if (response.status >= 500) {
+      captureWebException(apiError, {
+        layer: 'webApiRequest',
+        method,
+        path,
+        statusCode: response.status,
+        errorCode: apiError.code,
+        requestId: response.headers.get('x-request-id') ?? undefined,
+      });
+    } else {
+      recordWebBreadcrumb(
+        'http.client',
+        `${method} ${path} -> ${response.status} (${apiError.code})`,
+        { method, path, statusCode: response.status, errorCode: apiError.code },
+        'warning',
+      );
+    }
+
+    throw apiError;
   }
 
   return payload as T;

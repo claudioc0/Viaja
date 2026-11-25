@@ -14,9 +14,13 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",
+    "@react-native-firebase/app": "^27.2.0",
+    "@react-native-firebase/crashlytics": "^27.2.0",
+    "@sentry/react-native": "^8.36.0",
     "@tanstack/react-query": "^5.67.2",
     "@viaja/shared": "workspace:*",
     "expo": "~52.0.37",
+    "expo-build-properties": "^58.0.12",
     "expo-constants": "~17.0.8",
     "expo-linking": "~7.0.5",
     "expo-router": "~4.0.17",

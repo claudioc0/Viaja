@@ -5,11 +5,14 @@ import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env.js';
 import { openApiSpec } from './config/swagger.js';
 import { errorHandler } from './middlewares/error-handler.js';
+import { requestContextMiddleware } from './middlewares/request-context.js';
 import { apiRouter } from './routes/index.js';
 import { AppError } from './utils/app-error.js';
 
 export function createApp(): Express {
   const app = express();
+
+  app.use(requestContextMiddleware);
 
   app.use(
     helmet({

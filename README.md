@@ -83,6 +83,7 @@ pnpm format:check
 - [Modelagem Relacional e Controle de Concorrência](./docs/database.md)
 - [Especificação da API REST](./docs/api-documentation.md)
 - [Estratégia de Testes Automatizados](./docs/testing-strategy.md)
+- [Monitoramento, CI/CD e Deploy](./docs/deployment-and-monitoring.md)
 - [Identidade Visual e Design System](./docs/design-system.md)
 - [Protótipo Interativo (Mobile & Web)](./docs/prototypes/index.html)
 - [Convenções de Desenvolvimento](./CONTRIBUTING.md)

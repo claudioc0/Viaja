@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { AuthResponseDto, LoginInput, PublicUserDto, RegisterInput } from '@viaja/shared';
+import { setWebMonitoringUser } from '../lib/monitoring';
 import { setWebUnauthorizedListener, webApiRequest } from '../services/api-client';
 import { webAuthStorage } from '../services/auth-storage';
 
@@ -22,10 +23,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setWebUnauthorizedListener(() => {
       setUser(null);
+      setWebMonitoringUser(null);
     });
 
     const stored = webAuthStorage.load();
-    setUser(stored?.user ?? null);
+    const initialUser = stored?.user ?? null;
+    setUser(initialUser);
+    setWebMonitoringUser(initialUser);
     setIsHydrated(true);
   }, []);
 
@@ -37,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     webAuthStorage.save(res);
     setUser(res.user);
+    setWebMonitoringUser(res.user);
     return res.user;
   }, []);
 
@@ -48,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     webAuthStorage.save(res);
     setUser(res.user);
+    setWebMonitoringUser(res.user);
     return res.user;
   }, []);
 
@@ -66,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       webAuthStorage.clear();
       setUser(null);
+      setWebMonitoringUser(null);
     }
   }, []);
 

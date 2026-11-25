@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { LoginInput, PublicUserDto, RegisterInput } from '@viaja/shared';
 import { authApi } from '../features/auth/auth-api';
 import { registerUnauthorizedHandler } from '../services/api';
+import { setMobileMonitoringUser } from '../services/monitoring';
 import { secureSessionStorage } from '../services/secure-session';
 
 interface AuthState {
@@ -20,27 +21,32 @@ export const useAuthStore = create<AuthState>((set) => ({
   async hydrate() {
     registerUnauthorizedHandler(() => {
       set({ user: null });
+      setMobileMonitoringUser(null);
     });
 
     const session = await secureSessionStorage.loadSession();
     if (!session) {
       set({ user: null, isHydrated: true });
+      setMobileMonitoringUser(null);
       return;
     }
 
     set({ user: session.user, isHydrated: true });
+    setMobileMonitoringUser(session.user);
   },
 
   async signIn(input) {
     const authResponse = await authApi.login(input);
     await secureSessionStorage.saveSession(authResponse);
     set({ user: authResponse.user });
+    setMobileMonitoringUser(authResponse.user);
   },
 
   async signUp(input) {
     const authResponse = await authApi.register(input);
     await secureSessionStorage.saveSession(authResponse);
     set({ user: authResponse.user });
+    setMobileMonitoringUser(authResponse.user);
   },
 
   async signOut() {
@@ -54,6 +60,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     } finally {
       await secureSessionStorage.clearSession();
       set({ user: null });
+      setMobileMonitoringUser(null);
     }
   },
 }));

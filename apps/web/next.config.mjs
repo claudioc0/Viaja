@@ -1,3 +1,7 @@
+import sentryNextjs from '@sentry/nextjs';
+
+const { withSentryConfig } = sentryNextjs;
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -14,4 +18,13 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+const hasSentryDsn = Boolean(
+  process.env.NEXT_PUBLIC_SENTRY_DSN?.trim() || process.env.SENTRY_DSN?.trim(),
+);
+
+export default hasSentryDsn
+  ? withSentryConfig(nextConfig, {
+      silent: true,
+      telemetry: false,
+    })
+  : nextConfig;
