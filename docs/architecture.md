@@ -171,7 +171,18 @@ O backend adota **arquitetura modular orientada a domínio**, evitando acoplamen
 
 ---
 
-## 5. Justificativa da Stack e Decisões Técnicas (ADRs Iniciais)
+## 5. Justificativa da Stack e Decisões Técnicas (ADRs)
+
+As decisões arquiteturais completas — com contexto, alternativas descartadas, implementação e _trade-offs_ — estão documentadas individualmente em [`docs/adr/`](./adr/README.md):
+
+- [ADR-0001 — Monorepo com `pnpm` Workspaces e Contratos Compartilhados (`@viaja/shared`)](./adr/0001-monorepo-pnpm-shared-contracts.md)
+- [ADR-0002 — Persistência Relacional com PostgreSQL 16, Prisma ORM e `DECIMAL(10,2)`](./adr/0002-postgresql-relational-persistence.md)
+- [ADR-0003 — Orquestração Transacional ACID no Fluxo de Reservas, Pagamentos e Cancelamentos](./adr/0003-transactional-booking-workflow.md)
+- [ADR-0004 — Controle de Concorrência de Assentos em Duas Camadas e Expiração de Reservas](./adr/0004-seat-concurrency-and-expiration.md)
+- [ADR-0005 — Separação entre Estado de Servidor (`TanStack Query`) e Estado Efêmero (`Zustand`)](./adr/0005-tanstack-query-and-state-separation.md)
+- [ADR-0006 — Observabilidade Sanitizada (`Sentry` + `Crashlytics`) e Pipeline CI/CD](./adr/0006-sanitized-observability-and-cicd.md)
+
+### Resumo Executivo das Decisões
 
 ### ADR-001 — Monorepo com `pnpm workspaces` e `@viaja/shared`
 
