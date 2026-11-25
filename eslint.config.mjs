@@ -25,6 +25,7 @@ export default tseslint.config(
       globals: {
         ...globals.node,
         ...globals.browser,
+        ...globals.jest,
       },
     },
     rules: {

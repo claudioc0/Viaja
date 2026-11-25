@@ -117,10 +117,11 @@ export default function PassengerPortalPage() {
               <>
                 <span className="text-xs font-medium text-slate-600">{user.name}</span>
                 {user.role === 'ADMIN' ? (
-                  <Link href="/admin">
-                    <ViajaButton variant="outline" size="sm">
-                      Painel Admin
-                    </ViajaButton>
+                  <Link
+                    href="/admin"
+                    className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-900 hover:bg-slate-50"
+                  >
+                    Painel Admin
                   </Link>
                 ) : null}
                 <ViajaButton variant="ghost" size="sm" onClick={() => void signOut()}>
@@ -128,8 +129,11 @@ export default function PassengerPortalPage() {
                 </ViajaButton>
               </>
             ) : (
-              <Link href="/login">
-                <ViajaButton size="sm">Entrar / Cadastrar</ViajaButton>
+              <Link
+                href="/login"
+                className="inline-flex h-8 items-center justify-center rounded-lg bg-blue-700 px-3 text-xs font-semibold text-white hover:bg-blue-800"
+              >
+                Entrar / Cadastrar
               </Link>
             )}
           </div>

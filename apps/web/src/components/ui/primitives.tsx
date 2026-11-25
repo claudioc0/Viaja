@@ -55,7 +55,8 @@ interface TextFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
   ({ label, error, id, className, ...props }, ref) => {
-    const fieldId = id ?? props.name;
+    const autoId = React.useId();
+    const fieldId = id ?? props.name ?? autoId;
     return (
       <div className="space-y-1.5">
         {label ? (

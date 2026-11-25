@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Bus, ShieldCheck, Ticket } from 'lucide-react';
-import { StatusPill, SurfaceCard, ViajaButton } from '@/components/ui/primitives';
+import { StatusPill, SurfaceCard } from '@/components/ui/primitives';
 
 export default function HomePage() {
   return (
@@ -17,13 +17,17 @@ export default function HomePage() {
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
-          <Link href="/login">
-            <ViajaButton size="lg">Acessar Plataforma</ViajaButton>
+          <Link
+            href="/login"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-blue-700 px-6 text-sm font-semibold text-white transition-colors hover:bg-blue-800"
+          >
+            Acessar Plataforma
           </Link>
-          <Link href="/portal">
-            <ViajaButton variant="outline" size="lg">
-              Pesquisar Passagens
-            </ViajaButton>
+          <Link
+            href="/portal"
+            className="inline-flex h-11 items-center justify-center rounded-lg border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50"
+          >
+            Pesquisar Passagens
           </Link>
         </div>
       </div>
